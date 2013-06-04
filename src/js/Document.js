@@ -4,15 +4,16 @@
  * @constructor
  */
 mindmaps.Document = function() {
-	this.id = mindmaps.Util.createUUID();
-	this.title = "New Document";
-	this.mindmap = new mindmaps.MindMap();
-	this.dates = {
-		created : new Date(),
-		modified : null
-	};
+  this.id = mindmaps.Util.createUUID();
+  this.title = "New Document";
+  this.mindmap = new mindmaps.MindMap();
+  this.dates = {
+    created : new Date(),
+    modified : null
+  };
 
-	this.dimensions = new mindmaps.Point(4000, 2000);
+  this.dimensions = new mindmaps.Point(4000, 2000);
+  this.autosave = false;
 };
 
 /**
@@ -23,7 +24,7 @@ mindmaps.Document = function() {
  * @returns {mindmaps.Document}
  */
 mindmaps.Document.fromJSON = function(json) {
-	return mindmaps.Document.fromObject(JSON.parse(json));
+  return mindmaps.Document.fromObject(JSON.parse(json))
 };
 
 /**
@@ -34,18 +35,19 @@ mindmaps.Document.fromJSON = function(json) {
  * @returns {mindmaps.Document}
  */
 mindmaps.Document.fromObject = function(obj) {
-	var doc = new mindmaps.Document();
-	doc.id = obj.id;
-	doc.title = obj.title;
-	doc.mindmap = mindmaps.MindMap.fromObject(obj.mindmap);
-	doc.dates = {
-		created : new Date(obj.dates.created),
-		modified : obj.dates.modified ? new Date(obj.dates.modified) : null
-	};
+  var doc = new mindmaps.Document();
+  doc.id = obj.id;
+  doc.title = obj.title;
+  doc.mindmap = mindmaps.MindMap.fromObject(obj.mindmap);
+  doc.dates = {
+    created : new Date(obj.dates.created),
+    modified : obj.dates.modified ? new Date(obj.dates.modified) : null
+  };
 
-	doc.dimensions = mindmaps.Point.fromObject(obj.dimensions);
+  doc.dimensions = mindmaps.Point.fromObject(obj.dimensions);
+  doc.autosave = obj.autosave;
 
-	return doc;
+  return doc;
 };
 
 /**
@@ -54,22 +56,23 @@ mindmaps.Document.fromObject = function(obj) {
  * @private
  */
 mindmaps.Document.prototype.toJSON = function() {
-	// store dates in milliseconds since epoch
-	var dates = {
-		created : this.dates.created.getTime()
-	};
+  // store dates in milliseconds since epoch
+  var dates = {
+    created : this.dates.created.getTime()
+  };
 
-	if (this.dates.modified) {
-		dates.modified = this.dates.modified.getTime();
-	}
+  if (this.dates.modified) {
+    dates.modified = this.dates.modified.getTime();
+  }
 
-	return {
-		id : this.id,
-		title : this.title,
-		mindmap : this.mindmap,
-		dates : dates,
-		dimensions : this.dimensions
-	};
+  return {
+    id : this.id,
+    title : this.title,
+    mindmap : this.mindmap,
+    dates : dates,
+    dimensions : this.dimensions,
+    autosave: this.autosave
+  };
 };
 
 /**
@@ -78,7 +81,16 @@ mindmaps.Document.prototype.toJSON = function() {
  * @returns {String} the json.
  */
 mindmaps.Document.prototype.serialize = function() {
-	return JSON.stringify(this);
+  return JSON.stringify(this);
+};
+
+/**
+ * Updates modified date and title for saving.
+ */
+mindmaps.Document.prototype.prepareSave = function() {
+  this.dates.modified = new Date();
+  this.title = this.mindmap.getRoot().getCaption();
+  return this;
 };
 
 /**
@@ -89,13 +101,13 @@ mindmaps.Document.prototype.serialize = function() {
  * @param {mindmaps.Document} doc2
  */
 mindmaps.Document.sortByModifiedDateDescending = function(doc1, doc2) {
-	if (doc1.dates.modified > doc2.dates.modified) {
-		return -1;
-	}
-	if (doc1.dates.modified < doc2.dates.modified) {
-		return 1;
-	}
-	return 0;
+  if (doc1.dates.modified > doc2.dates.modified) {
+    return -1;
+  }
+  if (doc1.dates.modified < doc2.dates.modified) {
+    return 1;
+  }
+  return 0;
 };
 
 /**
@@ -105,7 +117,7 @@ mindmaps.Document.sortByModifiedDateDescending = function(doc1, doc2) {
  * @returns {Boolean}
  */
 mindmaps.Document.prototype.isNew = function() {
-	return this.dates.modified === null;
+  return this.dates.modified === null;
 };
 
 /**
@@ -114,7 +126,7 @@ mindmaps.Document.prototype.isNew = function() {
  * @returns {Date}
  */
 mindmaps.Document.prototype.getCreatedDate = function() {
-	return this.dates.created;
+  return this.dates.created;
 };
 
 /**
@@ -123,7 +135,7 @@ mindmaps.Document.prototype.getCreatedDate = function() {
  * @returns {Number}
  */
 mindmaps.Document.prototype.getWidth = function() {
-	return this.dimensions.x;
+  return this.dimensions.x;
 };
 
 /**
@@ -132,5 +144,20 @@ mindmaps.Document.prototype.getWidth = function() {
  * @returns {Number}
  */
 mindmaps.Document.prototype.getHeight = function() {
-	return this.dimensions.y;
+  return this.dimensions.y;
 };
+
+
+mindmaps.Document.prototype.isAutoSave = function() {
+  return this.autosave;
+}
+
+
+/**
+ * Sets autosave setting.
+ *
+ * @param {Boolean}
+ */
+mindmaps.Document.prototype.setAutoSave = function(autosave) {
+  this.autosave = autosave;
+}
